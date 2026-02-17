@@ -3,94 +3,75 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>小狸日語・檢定查詢系統</title>
+    <title>小狸日語・考古題資料庫 V2.3</title>
     <style>
-        /* 保持原有的 Airy Pastel 巨大旗艦版樣式 */
         @import url('https://fonts.googleapis.com/css2?family=Noto+Serif+JP:wght@700&family=Noto+Sans+JP:wght@700&display=swap');
-        body { font-family: 'Noto Sans JP', sans-serif; background-color: #FFFFFF; padding: 20px; font-weight: bold; margin: 0; }
-        .search-container { text-align: center; margin-bottom: 40px; position: sticky; top: 0; z-index: 100; background: white; padding: 15px 0; }
-        .search-input { width: 90%; max-width: 600px; padding: 15px 30px; border-radius: 40px; border: 4px solid #FDF2F4; font-size: 20px; font-weight: bold; outline: none; transition: 0.3s; box-sizing: border-box; }
-        .grid-layout { display: grid; grid-template-columns: repeat(auto-fill, minmax(440px, 1fr)); gap: 50px; max-width: 1400px; margin: 0 auto; }
-        .card-scene { height: 500px; perspective: 2000px; }
-        .card-inner { position: relative; width: 100%; height: 100%; transition: transform 1.2s cubic-bezier(0.4, 0, 0.2, 1); transform-style: preserve-3d; cursor: pointer; }
-        .card-scene:hover .card-inner { transform: rotateY(180deg); }
-        .card-front, .card-back { position: absolute; width: 100%; height: 100%; backface-visibility: hidden; border-radius: 36px; background-color: #FFFFFF; box-shadow: 0 10px 40px rgba(0,0,0,0.08); border: 1px solid rgba(0,0,0,0.08); display: flex; flex-direction: column; align-items: center; justify-content: center; box-sizing: border-box; }
+        body { font-family: 'Noto Sans JP', sans-serif; background-color: #FFFFFF; padding: 10px; font-weight: bold; margin: 0; }
+        .search-container { text-align: center; margin-bottom: 20px; position: sticky; top: 0; z-index: 100; background: white; padding: 10px 0; }
+        .search-input { width: 95%; max-width: 500px; padding: 12px 20px; border-radius: 30px; border: 3px solid #FDF2F4; font-size: 16px; font-weight: bold; outline: none; box-sizing: border-box; }
+        .grid-layout { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 20px; max-width: 1200px; margin: 0 auto; }
+        .card-scene { height: 480px; perspective: 1500px; width: 100%; }
+        .card-inner { position: relative; width: 100%; height: 100%; transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1); transform-style: preserve-3d; cursor: pointer; }
+        .card-inner.is-flipped { transform: rotateY(180deg); }
+        .card-front, .card-back { position: absolute; width: 100%; height: 100%; backface-visibility: hidden; border-radius: 24px; background-color: #FFFFFF; box-shadow: 0 4px 15px rgba(0,0,0,0.08); border: 1px solid rgba(0,0,0,0.1); display: flex; flex-direction: column; box-sizing: border-box; padding: 25px; }
         .card-back { transform: rotateY(180deg); }
-        .color-bar { position: absolute; top: 0; left: 0; right: 0; height: 20px; border-radius: 36px 36px 0 0; }
-        .ruby-container { position: relative; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; height: 150px; }
-        .kana-top { font-size: 24px; color: #666; letter-spacing: 0.1em; margin-bottom: 15px; height: 30px; }
-        .kanji-main { font-family: 'Noto Serif JP', serif; font-size: 64px; color: #333; line-height: 1.2; text-align: center; padding: 0 20px; }
-        .meaning-container { height: 150px; display: flex; align-items: center; justify-content: center; text-align: center; }
-        .meaning-text { font-size: 44px; color: #333; font-weight: bold; }
-        .note-section { font-size: 22px; color: #777; padding: 0 40px; line-height: 1.6; text-align: center; display: flex; align-items: flex-start; justify-content: center; gap: 10px; }
-        .level-label { position: absolute; top: 40px; font-size: 32px; color: #AAA; letter-spacing: 8px; font-weight: 900; }
-        .teacher-stamp { position: absolute; bottom: 40px; font-size: 16px; color: #FFB7C5; border: 2.5px solid #FFB7C5; padding: 4px 15px; border-radius: 8px; }
+        .color-bar { position: absolute; top: 0; left: 0; right: 0; height: 10px; border-radius: 24px 24px 0 0; }
+        .badge-container { display: flex; justify-content: space-between; margin-bottom: 15px; }
+        .level-badge { font-size: 18px; color: #BBB; font-weight: 900; }
+        .category-tag { font-size: 11px; background: #F5F5F5; color: #888; padding: 2px 8px; border-radius: 6px; }
+        .question-text { font-size: 14px; color: #555; line-height: 1.4; margin-bottom: 15px; min-height: 40px; }
+        .main-content { flex-grow: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; }
+        .kana-top { font-size: 16px; color: #666; margin-bottom: 5px; }
+        .kanji-main { font-family: 'Noto Serif JP', serif; font-size: 38px; color: #333; line-height: 1.2; text-decoration: underline; text-underline-offset: 8px; text-decoration-color: #FFB7C5; }
+        .options-box { font-size: 14px; color: #666; text-align: left; background: #FAFAFA; padding: 12px; border-radius: 12px; margin: 15px 0; width: 100%; }
+        .meaning-text { font-size: 28px; color: #333; font-weight: bold; margin-bottom: 10px; }
+        .note-section { font-size: 13px; color: #777; line-height: 1.6; text-align: left; }
+        .teacher-stamp { position: absolute; bottom: 15px; left: 25px; font-size: 11px; color: #FFB7C5; border: 1px solid #FFB7C5; padding: 1px 6px; border-radius: 4px; }
+        .ref-tag { position: absolute; bottom: 15px; right: 25px; font-size: 10px; color: #DDD; }
         .hidden { display: none !important; }
+        @media (max-width: 480px) { .card-scene { height: 420px; } .kanji-main { font-size: 32px; } .meaning-text { font-size: 24px; } }
     </style>
 </head>
 <body>
-
-<div class="search-container">
-    <input type="text" id="searchBar" class="search-input" onkeyup="filterCards()" placeholder="🔍 搜尋單字、級數或重點筆記...">
-</div>
-
+<div class="search-container"><input type="text" id="searchBar" class="search-input" oninput="filterCards()" placeholder="🔍 搜尋考古題、年份或關鍵字..."></div>
 <div id="cardGrid" class="grid-layout"></div>
-
 <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js"></script>
 <script>
     const csvUrl = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTBZOI3_qJ74H8TrQbIGM8zsm3RCJQO1l9J4tWbFRvufTUihvnIflzp275NYOX8M-MdaVkkaDhj-KYg/pub?output=csv';
-
     function loadData() {
-        Papa.parse(csvUrl, {
-            download: true,
-            header: true, // 這會自動對應試算表的標題列
-            complete: function(results) {
-                const grid = document.getElementById('cardGrid');
-                results.data.forEach(item => {
-                    if (!item.Kanji) return; // 跳過空行
-
-                    const card = document.createElement('div');
-                    card.className = 'card-scene';
-                    card.setAttribute('data-search', `${item.Kanji}${item.Kana}${item.Meaning}${item.Level}${item.Desc}`.toLowerCase());
-                    
-                    card.innerHTML = `
-                        <div class="card-inner">
-                            <div class="card-front">
-                                <div class="color-bar" style="background-color: ${item.Color || '#FFD1DC'}"></div>
-                                <div class="level-label">${item.Level}</div>
-                                <div class="ruby-container">
-                                    <div class="kana-top">${item.Kana}</div>
-                                    <div class="kanji-main">${item.Kanji}</div>
-                                </div>
-                                <div class="teacher-stamp">小狸老師整理</div>
-                            </div>
-                            <div class="card-back">
-                                <div class="color-bar" style="background-color: ${item.Color || '#FFD1DC'}; opacity: 0.3;"></div>
-                                <div class="meaning-container">
-                                    <div class="meaning-text">${item.Meaning}</div>
-                                </div>
-                                <div class="note-section">
-                                    <span>✏️</span><span><strong>聽解常客！</strong>${item.Desc}</span>
-                                </div>
-                                <div class="teacher-stamp">小狸老師整理</div>
-                            </div>
-                        </div>
-                    `;
-                    grid.appendChild(card);
-                });
-            }
-        });
+        Papa.parse(csvUrl, { download: true, header: true, complete: function(results) {
+            const grid = document.getElementById('cardGrid');
+            results.data.forEach(item => {
+                if (!item.Kanji) return;
+                const card = document.createElement('div');
+                card.className = 'card-scene';
+                card.setAttribute('data-search', `${item.Question}${item.Kanji}${item.Kana}${item.Meaning}${item.Level}${item.Category}${item.Reference}`.toLowerCase());
+                const color = item.Color || '#FFD1DC';
+                const optionsHtml = item.Options ? `<div class="options-box">${item.Options.replace(/\\n/g, '<br>')}</div>` : '';
+                card.innerHTML = `<div class="card-inner" onclick="this.classList.toggle('is-flipped')">
+                    <div class="card-front"><div class="color-bar" style="background-color: ${color}"></div>
+                        <div class="badge-container"><div class="level-badge">${item.Level || ''}</div><div class="category-tag">${item.Category || ''}</div></div>
+                        <div class="question-text">${item.Question || ''}</div>
+                        <div class="main-content">
+                            <div class="kana-top">${item.Kana || ''}</div>
+                            <div class="kanji-main">${item.Kanji || ''}</div>
+                        </div><div class="teacher-stamp">小狸老師整理</div></div>
+                    <div class="card-back"><div class="color-bar" style="background-color: ${color}; opacity: 0.3;"></div>
+                        <div class="badge-container"><div class="level-badge">${item.Level || ''}</div></div>
+                        <div class="main-content">
+                            <div class="meaning-text">${item.Meaning || ''}</div>
+                            ${optionsHtml}
+                            <div class="note-section">✏️ ${item.Desc || ''}</div>
+                        </div><div class="teacher-stamp">小狸老師整理</div><div class="ref-tag">${item.Reference || ''}</div></div></div>`;
+                grid.appendChild(card);
+            });
+        }});
     }
-
     function filterCards() {
         let input = document.getElementById('searchBar').value.toLowerCase();
         let cards = document.getElementsByClassName('card-scene');
-        for (let card of cards) {
-            let content = card.getAttribute('data-search');
-            card.classList.toggle('hidden', !content.includes(input));
-        }
+        for (let card of cards) { card.classList.toggle('hidden', !card.getAttribute('data-search').includes(input)); }
     }
-
     loadData();
 </script>
 </body>
