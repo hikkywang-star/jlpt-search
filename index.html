@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>小狸日語・檢定查詢系統</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Serif+JP:wght@700&family=Noto+Sans+JP:wght@700&display=swap');
+        
+        body { font-family: 'Noto Sans JP', sans-serif; background-color: #FFFFFF; padding: 20px; font-weight: bold; margin: 0; }
+        .search-container { text-align: center; margin-bottom: 40px; position: sticky; top: 0; z-index: 100; background: white; padding: 15px 0; }
+        .search-input { width: 90%; max-width: 600px; padding: 15px 30px; border-radius: 40px; border: 4px solid #FDF2F4; font-size: 20px; font-weight: bold; outline: none; transition: 0.3s; box-sizing: border-box; }
+        .search-input:focus { border-color: #FFB7C5; }
+
+        .grid-layout { display: grid; grid-template-columns: repeat(auto-fill, minmax(440px, 1fr)); gap: 50px; max-width: 1400px; margin: 0 auto; }
+        
+        .card-scene { height: 500px; perspective: 2000px; }
+        .card-inner { position: relative; width: 100%; height: 100%; transition: transform 1.2s cubic-bezier(0.4, 0, 0.2, 1); transform-style: preserve-3d; cursor: pointer; }
+        .card-scene:hover .card-inner { transform: rotateY(180deg); }
+        
+        .card-front, .card-back { position: absolute; width: 100%; height: 100%; -webkit-backface-visibility: hidden; backface-visibility: hidden; border-radius: 36px; background-color: #FFFFFF; box-shadow: 0 10px 40px rgba(0,0,0,0.08); border: 1px solid rgba(0,0,0,0.08); display: flex; flex-direction: column; align-items: center; justify-content: center; box-sizing: border-box; }
+        .card-back { transform: rotateY(180deg); }
+        
+        .color-bar { position: absolute; top: 0; left: 0; right: 0; height: 20px; border-radius: 36px 36px 0 0; }
+        .ruby-container { position: relative; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; height: 150px; }
+        .kana-top { font-size: 24px; color: #666; letter-spacing: 0.1em; margin-bottom: 15px; height: 30px; }
+        .kanji-main { font-family: 'Noto Serif JP', serif; font-size: 64px; color: #333; line-height: 1.2; text-align: center; }
+        
+        .meaning-container { height: 150px; display: flex; align-items: center; justify-content: center; text-align: center; }
+        .meaning-text { font-size: 48px; color: #333; font-weight: bold; }
+        
+        .note-section { font-size: 22px; color: #777; padding: 0 40px; line-height: 1.6; text-align: center; display: flex; align-items: flex-start; justify-content: center; gap: 10px; }
+        .note-icon { font-size: 28px; flex-shrink: 0; }
+        .freq-tag { color: #FF91A4; font-weight: bold; }
+
+        .level-label { position: absolute; top: 40px; font-size: 32px; color: #AAA; letter-spacing: 8px; font-weight: 900; }
+        .teacher-stamp { position: absolute; bottom: 40px; font-size: 16px; color: #FFB7C5; border: 2.5px solid #FFB7C5; padding: 4px 15px; border-radius: 8px; }
+        .hidden { display: none !important; }
+
+        @media (max-width: 500px) {
+            .grid-layout { grid-template-columns: 1fr; }
+            .card-scene { height: 400px; }
+            .kanji-main { font-size: 48px; }
+            .meaning-text { font-size: 36px; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="search-container">
+    <input type="text" id="searchBar" class="search-input" onkeyup="filterCards()" placeholder="🔍 搜尋單字、級數或重點筆記...">
+</div>
+
+<div id="cardGrid" class="grid-layout">
+    </div>
+
+<script>
+    // 連結您的 Google Sheets CSV
+    const csvUrl = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTBZOI3_qJ74H8TrQbIGM8zsm3RCJQO1l9J4tWbFRvufTUihvnIflzp275NYOX8M-MdaVkkaDhj-KYg/pub?output=csv';
+
+    async function loadData() {
+        try {
+            const response = await fetch(csvUrl);
+            const data = await response.text();
+            const rows = data.split('\\n').slice(1); // 略過第一行標題
+            const grid = document.getElementById('cardGrid');
+
+            rows.forEach(row => {
+                // 簡單解析 CSV (假設沒有複雜引號)
+                const cols = row.split(',');
+                if (cols.length < 5) return;
+
+                const [level, kanji, kana, meaning, desc, color] = cols.map(c => c.trim());
+
+                const card = document.createElement('div');
+                card.className = 'card-scene';
+                card.setAttribute('data-search', `${kanji}${kana}${meaning}${level}${desc}`.toLowerCase());
+                
+                card.innerHTML = `
+                    <div class="card-inner">
+                        <div class="card-front">
+                            <div class="color-bar" style="background-color: ${color}"></div>
+                            <div class="level-label">${level}</div>
+                            <div class="ruby-container">
+                                <div class="kana-top">${kana}</div>
+                                <div class="kanji-main">${kanji}</div>
+                            </div>
+                            <div class="teacher-stamp">小狸老師整理</div>
+                        </div>
+                        <div class="card-back">
+                            <div class="color-bar" style="background-color: ${color}; opacity: 0.3;"></div>
+                            <div class="meaning-container">
+                                <div class="meaning-text">${meaning}</div>
+                            </div>
+                            <div class="note-section">
+                                <span class="note-icon">✏️</span>
+                                <span><span class="freq-tag">聽解常客！</span>${desc}</span>
+                            </div>
+                            <div class="teacher-stamp">小狸老師整理</div>
+                        </div>
+                    </div>
+                `;
+                grid.appendChild(card);
+            });
+        } catch (error) {
+            console.error('Error loading data:', error);
+        }
+    }
+
+    function filterCards() {
+        let input = document.getElementById('searchBar').value.toLowerCase();
+        let cards = document.getElementsByClassName('card-scene');
+        for (let i = 0; i < cards.length; i++) {
+            let content = cards[i].getAttribute('data-search');
+            if (content.includes(input)) {
+                cards[i].classList.remove('hidden');
+            } else {
+                cards[i].classList.add('hidden');
+            }
+        }
+    }
+
+    loadData();
+</script>
+</body>
+</html>
