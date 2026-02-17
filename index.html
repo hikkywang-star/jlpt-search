@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>小狸日語・考古題資料庫 V2.3</title>
+    <title>小狸日語・考古題資料庫 V2.4</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Noto+Serif+JP:wght@700&family=Noto+Sans+JP:wght@700&display=swap');
         body { font-family: 'Noto Sans JP', sans-serif; background-color: #FFFFFF; padding: 10px; font-weight: bold; margin: 0; }
@@ -19,17 +19,23 @@
         .badge-container { display: flex; justify-content: space-between; margin-bottom: 15px; }
         .level-badge { font-size: 18px; color: #BBB; font-weight: 900; }
         .category-tag { font-size: 11px; background: #F5F5F5; color: #888; padding: 2px 8px; border-radius: 6px; }
-        .question-text { font-size: 14px; color: #555; line-height: 1.4; margin-bottom: 15px; min-height: 40px; }
+        
+        /* 修正：例句字體放大 */
+        .question-text { font-size: 18px; color: #333; line-height: 1.5; margin-bottom: 15px; min-height: 50px; }
+        
         .main-content { flex-grow: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; }
         .kana-top { font-size: 16px; color: #666; margin-bottom: 5px; }
         .kanji-main { font-family: 'Noto Serif JP', serif; font-size: 38px; color: #333; line-height: 1.2; text-decoration: underline; text-underline-offset: 8px; text-decoration-color: #FFB7C5; }
-        .options-box { font-size: 14px; color: #666; text-align: left; background: #FAFAFA; padding: 12px; border-radius: 12px; margin: 15px 0; width: 100%; }
+        
+        /* 修正：選項字體放大 */
+        .options-box { font-size: 18px; color: #555; text-align: left; background: #FAFAFA; padding: 12px; border-radius: 12px; margin: 15px 0; width: 100%; line-height: 1.6; }
+        
         .meaning-text { font-size: 28px; color: #333; font-weight: bold; margin-bottom: 10px; }
-        .note-section { font-size: 13px; color: #777; line-height: 1.6; text-align: left; }
+        .note-section { font-size: 15px; color: #777; line-height: 1.6; text-align: left; }
         .teacher-stamp { position: absolute; bottom: 15px; left: 25px; font-size: 11px; color: #FFB7C5; border: 1px solid #FFB7C5; padding: 1px 6px; border-radius: 4px; }
         .ref-tag { position: absolute; bottom: 15px; right: 25px; font-size: 10px; color: #DDD; }
         .hidden { display: none !important; }
-        @media (max-width: 480px) { .card-scene { height: 420px; } .kanji-main { font-size: 32px; } .meaning-text { font-size: 24px; } }
+        @media (max-width: 480px) { .card-scene { height: 420px; } .kanji-main { font-size: 32px; } .meaning-text { font-size: 24px; } .question-text, .options-box { font-size: 16px; } }
     </style>
 </head>
 <body>
