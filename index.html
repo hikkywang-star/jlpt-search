@@ -3,79 +3,47 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>小狸日語・考古題資料庫 V2.6</title>
+    <title>小狸日語・考古題資料庫 V2.7</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Noto+Serif+JP:wght@700&family=Noto+Sans+JP:wght@700&display=swap');
-        
-        /* 全域文字 18px 且全粗體 */
         body { font-family: 'Noto Sans JP', sans-serif; background-color: #FFFFFF; padding: 15px; font-weight: bold; margin: 0; font-size: 18px; }
-        
         .search-container { text-align: center; margin-bottom: 25px; position: sticky; top: 0; z-index: 100; background: white; padding: 10px 0; }
         .search-input { width: 95%; max-width: 500px; padding: 14px 25px; border-radius: 40px; border: 4px solid #FDF2F4; font-size: 20px; font-weight: bold; outline: none; box-sizing: border-box; }
-
         .grid-layout { display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: 30px; max-width: 1400px; margin: 0 auto; }
-        .card-scene { height: 520px; perspective: 1500px; width: 100%; }
+        .card-scene { height: 550px; perspective: 1500px; width: 100%; }
         .card-inner { position: relative; width: 100%; height: 100%; transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1); transform-style: preserve-3d; cursor: pointer; }
         .card-inner.is-flipped { transform: rotateY(180deg); }
-        
-        .card-front, .card-back { 
-            position: absolute; width: 100%; height: 100%; backface-visibility: hidden; 
-            border-radius: 36px; background-color: #FFFFFF; box-shadow: 0 10px 30px rgba(0,0,0,0.08); 
-            border: 1px solid rgba(0,0,0,0.1); display: flex; flex-direction: column; box-sizing: border-box; padding: 30px; 
-        }
+        .card-front, .card-back { position: absolute; width: 100%; height: 100%; backface-visibility: hidden; border-radius: 36px; background-color: #FFFFFF; box-shadow: 0 10px 30px rgba(0,0,0,0.08); border: 1px solid rgba(0,0,0,0.1); display: flex; flex-direction: column; box-sizing: border-box; padding: 30px; }
         .card-back { transform: rotateY(180deg); }
         .color-bar { position: absolute; top: 0; left: 0; right: 0; height: 12px; border-radius: 36px 36px 0 0; }
+        .antique-tag { color: #FF0000; border: 3px solid #FF0000; border-radius: 50%; width: 32px; height: 32px; display: inline-flex; align-items: center; justify-content: center; font-size: 18px; margin-right: 15px; flex-shrink: 0; }
+        .question-text { font-size: 22px; color: #333; line-height: 1.4; margin-bottom: 8px; display: flex; align-items: flex-start; }
         
-        .badge-container { display: flex; justify-content: space-between; margin-bottom: 20px; }
-        .level-badge { font-size: 22px; color: #BBB; font-weight: 900; letter-spacing: 2px; }
-        .category-tag { font-size: 14px; background: #F5F5F5; color: #888; padding: 4px 12px; border-radius: 10px; }
+        /* 中文翻譯小字 */
+        .translation-text { font-size: 15px; color: #999; font-weight: normal; margin-bottom: 15px; padding-left: 47px; }
+        .back-translation { font-size: 16px; color: #888; font-weight: normal; margin-top: 5px; }
 
-        /* 🔴 鮮紅圓圈「古」標籤 */
-        .antique-tag { 
-            color: #FF0000; border: 3px solid #FF0000; border-radius: 50%; 
-            width: 32px; height: 32px; display: inline-flex; align-items: center; 
-            justify-content: center; font-size: 18px; margin-right: 15px; flex-shrink: 0; 
-        }
-        
-        /* 題目字體放大 */
-        .question-text { font-size: 22px; color: #333; line-height: 1.6; margin-bottom: 20px; min-height: 60px; display: flex; align-items: flex-start; }
-        
-        /* 正面主單字與 RUBY 大幅放大 */
         .main-content { flex-grow: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; }
         .kana-top { font-size: 26px; color: #666; margin-bottom: 8px; letter-spacing: 0.1em; }
         .kanji-main { font-family: 'Noto Serif JP', serif; font-size: 60px; color: #333; line-height: 1.1; text-decoration: underline; text-underline-offset: 12px; text-decoration-color: #FFB7C5; }
         
-        /* 選項與正確答案字體放大 */
-        .options-box { font-size: 22px; color: #555; text-align: left; background: #FAFAFA; padding: 18px; border-radius: 16px; margin: 15px 0; width: 100%; line-height: 1.8; }
-        .correct-ans { color: #FF0000; font-weight: 900; }
+        /* 正確答案紅字且加外框 */
+        .options-box { font-size: 22px; color: #555; text-align: left; background: #FAFAFA; padding: 18px; border-radius: 16px; margin: 10px 0; width: 100%; line-height: 1.8; }
+        .correct-ans { color: #FF0000; font-weight: 900; border: 2px dashed #FF0000; padding: 0 5px; border-radius: 8px; }
 
-        .meaning-text { font-size: 32px; color: #333; font-weight: bold; margin-bottom: 12px; text-align: center; width: 100%; }
-        .note-section { font-size: 16px; color: #777; line-height: 1.6; text-align: left; }
-        
+        .meaning-text { font-size: 32px; color: #333; font-weight: bold; text-align: center; width: 100%; }
+        .note-section { font-size: 16px; color: #777; line-height: 1.6; text-align: left; font-weight: normal; }
         .teacher-stamp { position: absolute; bottom: 20px; left: 30px; font-size: 13px; color: #FFB7C5; border: 2px solid #FFB7C5; padding: 2px 10px; border-radius: 6px; }
-        .ref-tag { position: absolute; bottom: 20px; right: 30px; font-size: 12px; color: #DDD; font-style: italic; }
-        
+        .ref-tag { position: absolute; bottom: 20px; right: 30px; font-size: 12px; color: #DDD; }
         .hidden { display: none !important; }
-
-        @media (max-width: 480px) {
-            .card-scene { height: 480px; }
-            .kanji-main { font-size: 48px; }
-            .kana-top { font-size: 22px; }
-            .question-text, .options-box { font-size: 18px; }
-            .antique-tag { width: 28px; height: 28px; font-size: 16px; }
-        }
     </style>
 </head>
 <body>
-<div class="search-container">
-    <input type="text" id="searchBar" class="search-input" oninput="filterCards()" placeholder="🔍 搜尋考古題、年份或關鍵字...">
-</div>
+<div class="search-container"><input type="text" id="searchBar" class="search-input" oninput="filterCards()" placeholder="🔍 搜尋考古題、年份或單字..."></div>
 <div id="cardGrid" class="grid-layout"></div>
-
 <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js"></script>
 <script>
     const csvUrl = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTBZOI3_qJ74H8TrQbIGM8zsm3RCJQO1l9J4tWbFRvufTUihvnIflzp275NYOX8M-MdaVkkaDhj-KYg/pub?output=csv';
-    
     function loadData() {
         Papa.parse(csvUrl, { download: true, header: true, complete: function(results) {
             const grid = document.getElementById('cardGrid');
@@ -83,52 +51,33 @@
                 if (!item.Kanji) return;
                 const card = document.createElement('div');
                 card.className = 'card-scene';
-                card.setAttribute('data-search', `${item.Question}${item.Kanji}${item.Kana}${item.Meaning}${item.Level}${item.Category}${item.Reference}`.toLowerCase());
+                card.setAttribute('data-search', `${item.Question}${item.Kanji}${item.Meaning}${item.Level}`.toLowerCase());
                 
-                // 🔴 處理紅圈「古」標記
                 let qText = item.Question || '';
-                if (qText.startsWith('古')) {
-                    qText = `<span class="antique-tag">古</span><span>${qText.substring(1).trim()}</span>`;
-                }
+                let antiqueTag = qText.startsWith('古') ? `<span class="antique-tag">古</span>` : '';
+                let cleanQ = qText.startsWith('古') ? qText.substring(1).trim() : qText;
 
-                // ✅ 處理正確答案標註 (*)
                 let optRaw = item.Options || '';
                 let optHtml = optRaw.replace(/\*([^ \n\r]+)/g, '<span class="correct-ans">$1</span>').replace(/\\n/g, '<br>');
                 const optionsBox = optRaw ? `<div class="options-box">${optHtml}</div>` : '';
 
                 const color = item.Color || '#FFD1DC';
-                card.innerHTML = `
-                    <div class="card-inner" onclick="this.classList.toggle('is-flipped')">
-                        <div class="card-front">
-                            <div class="color-bar" style="background-color: ${color}"></div>
-                            <div class="badge-container">
-                                <div class="level-badge">${item.Level || ''}</div>
-                                <div class="category-tag">${item.Category || ''}</div>
-                            </div>
-                            <div class="question-text">${qText}</div>
-                            <div class="main-content">
-                                <div class="kana-top">${item.Kana || ''}</div>
-                                <div class="kanji-main">${item.Kanji || ''}</div>
-                            </div>
-                            <div class="teacher-stamp">小狸老師整理</div>
-                        </div>
-                        <div class="card-back">
-                            <div class="color-bar" style="background-color: ${color}; opacity: 0.3;"></div>
-                            <div class="badge-container"><div class="level-badge">${item.Level || ''}</div></div>
-                            <div class="main-content">
-                                <div class="meaning-text">${item.Meaning || ''}</div>
-                                ${optionsBox}
-                                <div class="note-section">✏️ ${item.Desc || ''}</div>
-                            </div>
-                            <div class="teacher-stamp">小狸老師整理</div>
-                            <div class="ref-tag">${item.Reference || ''}</div>
-                        </div>
-                    </div>`;
+                card.innerHTML = `<div class="card-inner" onclick="this.classList.toggle('is-flipped')">
+                    <div class="card-front"><div class="color-bar" style="background-color: ${color}"></div>
+                        <div class="question-text">${antiqueTag}<span>${cleanQ}</span></div>
+                        <div class="translation-text">${item.TransQ || ''}</div>
+                        <div class="main-content"><div class="kana-top">${item.Kana || ''}</div><div class="kanji-main">${item.Kanji || ''}</div></div>
+                        <div class="teacher-stamp">小狸老師整理</div></div>
+                    <div class="card-back"><div class="color-bar" style="background-color: ${color}; opacity: 0.3;"></div>
+                        <div class="meaning-text">${item.Meaning || ''}</div>
+                        <div class="back-translation" style="text-align:center;">${item.TransM || ''}</div>
+                        ${optionsBox}
+                        <div class="note-section">✏️ ${item.Desc || ''}</div>
+                        <div class="teacher-stamp">小狸老師整理</div><div class="ref-tag">${item.Reference || ''}</div></div></div>`;
                 grid.appendChild(card);
             });
         }});
     }
-
     function filterCards() {
         let input = document.getElementById('searchBar').value.toLowerCase();
         let cards = document.getElementsByClassName('card-scene');
