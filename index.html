@@ -3,10 +3,21 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>小狸日語・考古題資料庫 V2.8.2</title>
+    <title>小狸日語・專屬會員查詢系統 V2.9</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Noto+Serif+JP:wght@700&family=Noto+Sans+JP:wght@700&display=swap');
+        
         body { font-family: 'Noto Sans JP', sans-serif; background-color: #FFFFFF; padding: 15px; font-weight: bold; margin: 0; font-size: 18px; }
+        
+        /* 登入視窗樣式 */
+        #loginOverlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #FDF2F4; z-index: 9999; display: flex; align-items: center; justify-content: center; }
+        .login-box { background: white; padding: 40px; border-radius: 36px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); text-align: center; width: 90%; max-width: 400px; border: 2px solid #FFB7C5; }
+        .login-box h2 { color: #333; margin-bottom: 20px; font-family: 'Noto Serif JP', serif; }
+        .login-input { width: 100%; padding: 15px; border-radius: 15px; border: 2px solid #EEE; margin-bottom: 20px; font-size: 16px; outline: none; box-sizing: border-box; }
+        .login-btn { background: #FFB7C5; color: white; border: none; padding: 15px 40px; border-radius: 15px; font-size: 18px; font-weight: bold; cursor: pointer; transition: 0.3s; }
+        .login-btn:hover { background: #FF91A4; }
+
+        /* 原有查詢系統樣式 */
         .search-container { text-align: center; margin-bottom: 25px; position: sticky; top: 0; z-index: 100; background: white; padding: 10px 0; }
         .search-input { width: 95%; max-width: 500px; padding: 14px 25px; border-radius: 40px; border: 4px solid #FDF2F4; font-size: 20px; font-weight: bold; outline: none; box-sizing: border-box; }
         .grid-layout { display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: 30px; max-width: 1400px; margin: 0 auto; }
@@ -17,89 +28,110 @@
         .card-back { transform: rotateY(180deg); }
         .color-bar { position: absolute; top: 0; left: 0; right: 0; height: 12px; border-radius: 36px 36px 0 0; }
         .antique-tag { color: #FF0000; border: 3px solid #FF0000; border-radius: 50%; width: 32px; height: 32px; display: inline-flex; align-items: center; justify-content: center; font-size: 18px; margin-right: 15px; flex-shrink: 0; }
-        
         .question-text { font-size: 22px; color: #333; line-height: 1.4; margin-bottom: 5px; display: flex; align-items: flex-start; }
         .translation-text { font-size: 16px; color: #999; font-weight: normal; margin-bottom: 15px; padding-left: 47px; line-height: 1.4; text-align: left; width: 100%; min-height: 20px; }
-        
         .meaning-text { font-size: 32px; color: #333; font-weight: bold; text-align: center; width: 100%; }
         .back-translation { font-size: 18px; color: #888; font-weight: normal; margin-top: 8px; text-align: center; margin-bottom: 15px; width: 100%; min-height: 20px; }
-
         .main-content { flex-grow: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; }
         .kana-top { font-size: 26px; color: #666; margin-bottom: 8px; letter-spacing: 0.1em; min-height: 32px; }
         .kanji-main { font-family: 'Noto Serif JP', serif; font-size: 60px; color: #333; line-height: 1.1; text-decoration: underline; text-underline-offset: 12px; text-decoration-color: #FFB7C5; }
         .options-box { font-size: 22px; color: #555; text-align: left; background: #FAFAFA; padding: 18px; border-radius: 16px; margin: 10px 0; width: 100%; line-height: 1.8; }
         .correct-ans { color: #FF0000; font-weight: 900; border: 2px dashed #FF0000; padding: 0 5px; border-radius: 8px; }
-        .note-section { font-size: 16px; color: #777; line-height: 1.6; text-align: left; font-weight: normal; }
         .teacher-stamp { position: absolute; bottom: 20px; left: 30px; font-size: 13px; color: #FFB7C5; border: 2px solid #FFB7C5; padding: 2px 10px; border-radius: 6px; }
-        .ref-tag { position: absolute; bottom: 20px; right: 30px; font-size: 12px; color: #DDD; }
         .hidden { display: none !important; }
     </style>
 </head>
 <body>
-<div class="search-container"><input type="text" id="searchBar" class="search-input" oninput="filterCards()" placeholder="🔍 搜尋考古題、年份或單字..."></div>
-<div id="cardGrid" class="grid-layout"></div>
+
+<div id="loginOverlay">
+    <div class="login-box">
+        <h2>小狸日語・登入</h2>
+        <input type="email" id="emailInput" class="login-input" placeholder="請輸入註冊 Email">
+        <button onclick="checkLogin()" class="login-btn">進入系統</button>
+        <p id="loginMsg" style="color: red; margin-top: 10px; font-size: 14px;"></p>
+    </div>
+</div>
+
+<div id="mainApp" class="hidden">
+    <div class="search-container">
+        <input type="text" id="searchBar" class="search-input" oninput="filterCards()" placeholder="🔍 搜尋考古題、單字...">
+    </div>
+    <div id="cardGrid" class="grid-layout"></div>
+</div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js"></script>
 <script>
-    const csvUrl = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTBZOI3_qJ74H8TrQbIGM8zsm3RCJQO1l9J4tWbFRvufTUihvnIflzp275NYOX8M-MdaVkkaDhj-KYg/pub?output=csv';
-    
+    // 網址設定 --------------------------------------------------
+    const dataCsvUrl = '您的題目資料CSV網址'; // 原本題目的CSV
+    const userCsvUrl = '您的會員名單CSV網址'; // 新增的Users分頁CSV
+    // ---------------------------------------------------------
+
+    let allowedEmails = [];
+
+    // 1. 預加載會員名單
+    Papa.parse(userCsvUrl, {
+        download: true,
+        header: false,
+        complete: function(results) {
+            allowedEmails = results.data.slice(1).map(row => row[0].toLowerCase().trim());
+        }
+    });
+
+    function checkLogin() {
+        const inputEmail = document.getElementById('emailInput').value.toLowerCase().trim();
+        const msg = document.getElementById('loginMsg');
+
+        if (allowedEmails.includes(inputEmail)) {
+            document.getElementById('loginOverlay').style.display = 'none';
+            document.getElementById('mainApp').classList.remove('hidden');
+            loadCardData(); // 登入成功才抓題目資料
+        } else {
+            msg.innerText = "抱歉，此 Email 尚未授權或輸入錯誤。";
+        }
+    }
+
     function hasKanji(str) { return /[一-龠々]/.test(str); }
 
-    function loadData() {
-        Papa.parse(csvUrl, { 
+    function loadCardData() {
+        Papa.parse(dataCsvUrl, { 
             download: true, 
-            header: false, // 改為 false 透過索引讀取，避開欄位名稱問題
+            header: false, 
             complete: function(results) {
                 const grid = document.getElementById('cardGrid');
-                // 從第二行開始讀取資料
                 results.data.slice(1).forEach(row => {
-                    // row[0]=Level, row[1]=Question, row[2]=TransQ, row[3]=Kanji, row[4]=Kana...
                     if (!row[3]) return; 
-
                     const card = document.createElement('div');
                     card.className = 'card-scene';
-                    // 搜尋內容
                     card.setAttribute('data-search', (row[1]+row[3]+row[5]+row[0]).toLowerCase());
-                    
                     let qText = row[1] || '';
                     let antiqueTag = qText.startsWith('古') ? `<span class="antique-tag">古</span>` : '';
-                    let cleanQ = qText.startsWith('古') ? qText.substring(1).trim() : qText;
-                    
-                    // 智慧 Ruby
                     let rubyDisplay = hasKanji(row[3]) ? (row[4] || '') : '';
-
-                    // 正確答案標註 (row[7]=Options)
                     let optRaw = row[7] || '';
                     let optHtml = optRaw.replace(/\*([^ \n\r]+)/g, '<span class="correct-ans">$1</span>').replace(/\\n/g, '<br>');
                     const optionsBox = optRaw ? `<div class="options-box">${optHtml}</div>` : '';
-
                     const color = row[11] || '#FFD1DC';
                     card.innerHTML = `<div class="card-inner" onclick="this.classList.toggle('is-flipped')">
                         <div class="card-front"><div class="color-bar" style="background-color: ${color}"></div>
-                            <div class="question-text">${antiqueTag}<span>${cleanQ}</span></div>
+                            <div class="question-text">${antiqueTag}<span>${qText.startsWith('古')?qText.substring(1).trim():qText}</span></div>
                             <div class="translation-text">${row[2] || ''}</div>
-                            <div class="main-content">
-                                <div class="kana-top">${rubyDisplay}</div>
-                                <div class="kanji-main">${row[3] || ''}</div>
-                            </div>
+                            <div class="main-content"><div class="kana-top">${rubyDisplay}</div><div class="kanji-main">${row[3] || ''}</div></div>
                             <div class="teacher-stamp">小狸老師整理</div></div>
                         <div class="card-back"><div class="color-bar" style="background-color: ${color}; opacity: 0.3;"></div>
                             <div class="meaning-text">${row[5] || ''}</div>
                             <div class="back-translation">${row[6] || ''}</div>
-                            ${optionsBox}
-                            <div class="note-section">✏️ ${row[8] || ''}</div>
+                            ${optionsBox}<div class="note-section">✏️ ${row[8] || ''}</div>
                             <div class="teacher-stamp">小狸老師整理</div><div class="ref-tag">${row[10] || ''}</div></div></div>`;
                     grid.appendChild(card);
                 });
             }
         });
     }
+
     function filterCards() {
         let input = document.getElementById('searchBar').value.toLowerCase();
         let cards = document.getElementsByClassName('card-scene');
         for (let card of cards) { card.classList.toggle('hidden', !card.getAttribute('data-search').includes(input)); }
     }
-    loadData();
 </script>
 </body>
 </html>
