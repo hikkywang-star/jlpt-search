@@ -8,19 +8,14 @@
         @import url('https://fonts.googleapis.com/css2?family=Noto+Serif+JP:wght@700&family=Noto+Sans+JP:wght@700&display=swap');
         body { font-family: 'Noto Sans JP', sans-serif; background-color: #FFFFFF; padding: 15px; font-weight: bold; margin: 0; font-size: 18px; }
         
-        /* 登入介面 */
         #loginOverlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #FDF2F4; z-index: 9999; display: flex; align-items: center; justify-content: center; }
-        .login-box { 
-            background: white; padding: 40px; border-radius: 36px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); 
-            text-align: center; width: 90%; max-width: 400px; border: 2px solid #FFB7C5; position: relative; 
-        }
+        .login-box { background: white; padding: 40px; border-radius: 36px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); text-align: center; width: 90%; max-width: 400px; border: 2px solid #FFB7C5; position: relative; }
         .login-box h2 { color: #333; margin-bottom: 20px; font-family: 'Noto Serif JP', serif; }
         .login-input { width: 100%; padding: 15px; border-radius: 15px; border: 2px solid #EEE; margin-bottom: 20px; font-size: 16px; outline: none; box-sizing: border-box; }
         .login-btn { background: #FFB7C5; color: white; border: none; padding: 15px 40px; border-radius: 15px; font-size: 18px; font-weight: bold; cursor: pointer; transition: 0.3s; }
         .login-btn:hover { background: #FF91A4; }
         .version-tag { position: absolute; bottom: 15px; right: 20px; font-size: 10px; color: #DDD; font-weight: normal; }
 
-        /* 查詢系統樣式 */
         .search-container { text-align: center; margin-bottom: 25px; position: sticky; top: 0; z-index: 100; background: white; padding: 10px 0; }
         .search-input { width: 95%; max-width: 500px; padding: 14px 25px; border-radius: 40px; border: 4px solid #FDF2F4; font-size: 20px; font-weight: bold; outline: none; box-sizing: border-box; }
         .grid-layout { display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: 30px; max-width: 1400px; margin: 0 auto; }
@@ -49,10 +44,10 @@
 <div id="loginOverlay">
     <div class="login-box">
         <h2>小狸日語・會員登入</h2>
-        <input type="email" id="emailInput" class="login-input" placeholder="請輸入會員 Email">
+        <input type="email" id="emailInput" class="login-input" placeholder="請輸入會員 Email" autofocus>
         <button onclick="checkLogin()" class="login-btn">進入系統</button>
         <p id="loginMsg" style="color: red; margin-top: 10px; font-size: 14px;"></p>
-        <div class="version-tag">V2.9.2 記憶穩定版</div>
+        <div class="version-tag">V2.9.3 旗艦記憶版</div>
     </div>
 </div>
 
@@ -65,43 +60,44 @@
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js"></script>
 <script>
-    // 網址設定 --------------------------------------------------
     const userCsvUrl = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTBZOI3_qJ74H8TrQbIGM8zsm3RCJQO1l9J4tWbFRvufTUihvnIflzp275NYOX8M-MdaVkkaDhj-KYg/pub?gid=849908806&single=true&output=csv';
     const dataCsvUrl = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTBZOI3_qJ74H8TrQbIGM8zsm3RCJQO1l9J4tWbFRvufTUihvnIflzp275NYOX8M-MdaVkkaDhj-KYg/pub?gid=0&single=true&output=csv'; 
-    // ---------------------------------------------------------
 
     let allowedEmails = [];
+    const STORAGE_KEY = 'korri_member_login_email';
+
     function hasKanji(str) { return /[一-龠々]/.test(str); }
 
-    // 1. 預加載會員名單並檢查記憶登入
-    Papa.parse(userCsvUrl, {
-        download: true,
-        header: false,
-        complete: function(results) {
-            allowedEmails = results.data.slice(1).map(row => row[0] ? row[0].toLowerCase().trim() : "");
-            
-            // 檢查是否有記憶過的 Email
-            const savedEmail = localStorage.getItem('korri_member_email');
-            if (savedEmail && allowedEmails.includes(savedEmail)) {
-                autoLogin(savedEmail);
+    // 頁面載入時：讀取名單 + 嘗試記憶登入
+    window.onload = function() {
+        Papa.parse(userCsvUrl, {
+            download: true,
+            header: false,
+            complete: function(results) {
+                allowedEmails = results.data.slice(1).map(row => row[0] ? row[0].toLowerCase().trim() : "");
+                
+                // 讀取記憶中的 Email
+                const savedEmail = localStorage.getItem(STORAGE_KEY);
+                if (savedEmail) {
+                    document.getElementById('emailInput').value = savedEmail;
+                    if (allowedEmails.includes(savedEmail)) {
+                        proceedToApp(); // 如果名單裡有，就直接進入
+                    }
+                }
             }
-        }
-    });
+        });
+    };
 
     function checkLogin() {
         const inputEmail = document.getElementById('emailInput').value.toLowerCase().trim();
         const msg = document.getElementById('loginMsg');
+        
         if (allowedEmails.includes(inputEmail)) {
-            // 登入成功，儲存到記憶
-            localStorage.setItem('korri_member_email', inputEmail);
+            localStorage.setItem(STORAGE_KEY, inputEmail); // 存入記憶
             proceedToApp();
         } else {
             msg.innerText = "抱歉，此 Email 尚未授權。";
         }
-    }
-
-    function autoLogin(email) {
-        proceedToApp();
     }
 
     function proceedToApp() {
@@ -116,6 +112,7 @@
             header: false, 
             complete: function(results) {
                 const grid = document.getElementById('cardGrid');
+                grid.innerHTML = ''; // 清空以防重複
                 results.data.slice(1).forEach(row => {
                     if (!row[3]) return; 
                     const card = document.createElement('div');
