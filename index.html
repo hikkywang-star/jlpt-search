@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>小狸日語・考古題資料庫 V2.8.1</title>
+    <title>小狸日語・考古題資料庫 V2.8.2</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Noto+Serif+JP:wght@700&family=Noto+Sans+JP:wght@700&display=swap');
         body { font-family: 'Noto Sans JP', sans-serif; background-color: #FFFFFF; padding: 15px; font-weight: bold; margin: 0; font-size: 18px; }
@@ -18,13 +18,11 @@
         .color-bar { position: absolute; top: 0; left: 0; right: 0; height: 12px; border-radius: 36px 36px 0 0; }
         .antique-tag { color: #FF0000; border: 3px solid #FF0000; border-radius: 50%; width: 32px; height: 32px; display: inline-flex; align-items: center; justify-content: center; font-size: 18px; margin-right: 15px; flex-shrink: 0; }
         
-        /* 題目與中文翻譯 */
         .question-text { font-size: 22px; color: #333; line-height: 1.4; margin-bottom: 5px; display: flex; align-items: flex-start; }
-        .translation-text { font-size: 16px; color: #999; font-weight: normal; margin-bottom: 15px; padding-left: 47px; line-height: 1.4; text-align: left; width: 100%; }
+        .translation-text { font-size: 16px; color: #999; font-weight: normal; margin-bottom: 15px; padding-left: 47px; line-height: 1.4; text-align: left; width: 100%; min-height: 20px; }
         
-        /* 背面語意與中文解釋 */
         .meaning-text { font-size: 32px; color: #333; font-weight: bold; text-align: center; width: 100%; }
-        .back-translation { font-size: 18px; color: #888; font-weight: normal; margin-top: 8px; text-align: center; margin-bottom: 15px; width: 100%; }
+        .back-translation { font-size: 18px; color: #888; font-weight: normal; margin-top: 8px; text-align: center; margin-bottom: 15px; width: 100%; min-height: 20px; }
 
         .main-content { flex-grow: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; }
         .kana-top { font-size: 26px; color: #666; margin-bottom: 8px; letter-spacing: 0.1em; min-height: 32px; }
@@ -48,45 +46,53 @@
     function hasKanji(str) { return /[一-龠々]/.test(str); }
 
     function loadData() {
-        Papa.parse(csvUrl, { download: true, header: true, complete: function(results) {
-            const grid = document.getElementById('cardGrid');
-            results.data.forEach(item => {
-                if (!item.Kanji) return;
-                const card = document.createElement('div');
-                card.className = 'card-scene';
-                card.setAttribute('data-search', `${item.Question}${item.Kanji}${item.Meaning}${item.Level}${item.TransQ}${item.TransM}`.toLowerCase());
-                
-                let qText = item.Question || '';
-                let antiqueTag = qText.startsWith('古') ? `<span class="antique-tag">古</span>` : '';
-                let cleanQ = qText.startsWith('古') ? qText.substring(1).trim() : qText;
-                
-                // 智慧 Ruby 邏輯
-                let rubyDisplay = hasKanji(item.Kanji) ? (item.Kana || '') : '';
+        Papa.parse(csvUrl, { 
+            download: true, 
+            header: false, // 改為 false 透過索引讀取，避開欄位名稱問題
+            complete: function(results) {
+                const grid = document.getElementById('cardGrid');
+                // 從第二行開始讀取資料
+                results.data.slice(1).forEach(row => {
+                    // row[0]=Level, row[1]=Question, row[2]=TransQ, row[3]=Kanji, row[4]=Kana...
+                    if (!row[3]) return; 
 
-                // 正確答案標註
-                let optRaw = item.Options || '';
-                let optHtml = optRaw.replace(/\*([^ \n\r]+)/g, '<span class="correct-ans">$1</span>').replace(/\\n/g, '<br>');
-                const optionsBox = optRaw ? `<div class="options-box">${optHtml}</div>` : '';
+                    const card = document.createElement('div');
+                    card.className = 'card-scene';
+                    // 搜尋內容
+                    card.setAttribute('data-search', (row[1]+row[3]+row[5]+row[0]).toLowerCase());
+                    
+                    let qText = row[1] || '';
+                    let antiqueTag = qText.startsWith('古') ? `<span class="antique-tag">古</span>` : '';
+                    let cleanQ = qText.startsWith('古') ? qText.substring(1).trim() : qText;
+                    
+                    // 智慧 Ruby
+                    let rubyDisplay = hasKanji(row[3]) ? (row[4] || '') : '';
 
-                const color = item.Color || '#FFD1DC';
-                card.innerHTML = `<div class="card-inner" onclick="this.classList.toggle('is-flipped')">
-                    <div class="card-front"><div class="color-bar" style="background-color: ${color}"></div>
-                        <div class="question-text">${antiqueTag}<span>${cleanQ}</span></div>
-                        <div class="translation-text">${item.TransQ || ''}</div>
-                        <div class="main-content">
-                            <div class="kana-top">${rubyDisplay}</div>
-                            <div class="kanji-main">${item.Kanji || ''}</div>
-                        </div>
-                        <div class="teacher-stamp">小狸老師整理</div></div>
-                    <div class="card-back"><div class="color-bar" style="background-color: ${color}; opacity: 0.3;"></div>
-                        <div class="meaning-text">${item.Meaning || ''}</div>
-                        <div class="back-translation">${item.TransM || ''}</div>
-                        ${optionsBox}
-                        <div class="note-section">✏️ ${item.Desc || ''}</div>
-                        <div class="teacher-stamp">小狸老師整理</div><div class="ref-tag">${item.Reference || ''}</div></div></div>`;
-                grid.appendChild(card);
-            });
-        }});
+                    // 正確答案標註 (row[7]=Options)
+                    let optRaw = row[7] || '';
+                    let optHtml = optRaw.replace(/\*([^ \n\r]+)/g, '<span class="correct-ans">$1</span>').replace(/\\n/g, '<br>');
+                    const optionsBox = optRaw ? `<div class="options-box">${optHtml}</div>` : '';
+
+                    const color = row[11] || '#FFD1DC';
+                    card.innerHTML = `<div class="card-inner" onclick="this.classList.toggle('is-flipped')">
+                        <div class="card-front"><div class="color-bar" style="background-color: ${color}"></div>
+                            <div class="question-text">${antiqueTag}<span>${cleanQ}</span></div>
+                            <div class="translation-text">${row[2] || ''}</div>
+                            <div class="main-content">
+                                <div class="kana-top">${rubyDisplay}</div>
+                                <div class="kanji-main">${row[3] || ''}</div>
+                            </div>
+                            <div class="teacher-stamp">小狸老師整理</div></div>
+                        <div class="card-back"><div class="color-bar" style="background-color: ${color}; opacity: 0.3;"></div>
+                            <div class="meaning-text">${row[5] || ''}</div>
+                            <div class="back-translation">${row[6] || ''}</div>
+                            ${optionsBox}
+                            <div class="note-section">✏️ ${row[8] || ''}</div>
+                            <div class="teacher-stamp">小狸老師整理</div><div class="ref-tag">${row[10] || ''}</div></div></div>`;
+                    grid.appendChild(card);
+                });
+            }
+        });
     }
     function filterCards() {
         let input = document.getElementById('searchBar').value.toLowerCase();
