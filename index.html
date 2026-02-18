@@ -52,7 +52,7 @@
         <input type="email" id="emailInput" class="login-input" placeholder="請輸入會員 Email">
         <button onclick="checkLogin()" class="login-btn">進入系統</button>
         <p id="loginMsg" style="color: red; margin-top: 10px; font-size: 14px;"></p>
-        <div class="version-tag">V2.9.1 穩定版代碼</div>
+        <div class="version-tag">V2.9.2 記憶穩定版</div>
     </div>
 </div>
 
@@ -66,20 +66,25 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js"></script>
 <script>
     // 網址設定 --------------------------------------------------
-    // 會員名單 (Users 分頁)
     const userCsvUrl = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTBZOI3_qJ74H8TrQbIGM8zsm3RCJQO1l9J4tWbFRvufTUihvnIflzp275NYOX8M-MdaVkkaDhj-KYg/pub?gid=849908806&single=true&output=csv';
-    // 題目資料 (題目內容分頁)
     const dataCsvUrl = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTBZOI3_qJ74H8TrQbIGM8zsm3RCJQO1l9J4tWbFRvufTUihvnIflzp275NYOX8M-MdaVkkaDhj-KYg/pub?gid=0&single=true&output=csv'; 
     // ---------------------------------------------------------
 
     let allowedEmails = [];
     function hasKanji(str) { return /[一-龠々]/.test(str); }
 
+    // 1. 預加載會員名單並檢查記憶登入
     Papa.parse(userCsvUrl, {
         download: true,
         header: false,
         complete: function(results) {
             allowedEmails = results.data.slice(1).map(row => row[0] ? row[0].toLowerCase().trim() : "");
+            
+            // 檢查是否有記憶過的 Email
+            const savedEmail = localStorage.getItem('korri_member_email');
+            if (savedEmail && allowedEmails.includes(savedEmail)) {
+                autoLogin(savedEmail);
+            }
         }
     });
 
@@ -87,12 +92,22 @@
         const inputEmail = document.getElementById('emailInput').value.toLowerCase().trim();
         const msg = document.getElementById('loginMsg');
         if (allowedEmails.includes(inputEmail)) {
-            document.getElementById('loginOverlay').style.display = 'none';
-            document.getElementById('mainApp').classList.remove('hidden');
-            loadCardData();
+            // 登入成功，儲存到記憶
+            localStorage.setItem('korri_member_email', inputEmail);
+            proceedToApp();
         } else {
             msg.innerText = "抱歉，此 Email 尚未授權。";
         }
+    }
+
+    function autoLogin(email) {
+        proceedToApp();
+    }
+
+    function proceedToApp() {
+        document.getElementById('loginOverlay').style.display = 'none';
+        document.getElementById('mainApp').classList.remove('hidden');
+        loadCardData();
     }
 
     function loadCardData() {
